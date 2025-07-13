@@ -1,4 +1,4 @@
-export default async function getColors(path, colorCount = 0) {
+export default async function run(path, colorCount = 0) {
   let result = []
   let mod = 0
 

@@ -1,20 +1,30 @@
-import magick from './extractors/magick'
-import mapColors from './mapper'
+import args from "./misc/args";
+import usage from "./misc/help";
+import extractors from './extractors/atlas';
+import mappers from './mappers/atlas';
+import demoOutput from "./helpers/demoOutput";
 
-const main = async () => {
-  const config = await Bun.file(`${Bun.env.XDG_CONFIG_HOME}/bunwal/config.json`).json()
+const main = async (args) => {
+  if (args.help) return console.log(usage);
+  if (Object.keys(args).length === 2) console.log('No args - Using config.json')
 
-  console.log(config.wallpaper.path)
-  const rawPalette = await magick(config.wallpaper.path, 16)
-  
-  const res = new mapColors(rawPalette, 'light', "darken").generate();
+  const config = await Bun.file(`${Bun.env.XDG_CONFIG_HOME}/bunwal/config.json`).json();
 
-  for(let i = 0; i < 8; i++) {
-    console.log(
-      Bun.color(res[i], 'ansi'), "████", i, res[i],
-      Bun.color(res[i+8], 'ansi'), "████", i+8, res[i+8]
+  const imageFile = args.image === undefined ?
+    config.wallpaper.path :
+    args.image
+
+  const rawColors = await extractors.magick(imageFile, 16)
+
+  const mappedColors = mappers.pywal.run(rawColors,
+    {
+      scheme: args.light === true ? 'light' : 'dark',
+      c16: args.cols16
+    }
   )
-  }
+
+  demoOutput(mappedColors)
 }
 
-main()
+
+main(args)
